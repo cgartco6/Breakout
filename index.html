@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Intelligence Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1a1b2d;
+            --secondary: #25273d;
+            --accent: #4cc9f0;
+            --accent2: #f72585;
+            --text: #edf2f4;
+            --text-secondary: #8d99ae;
+            --success: #72e128;
+            --warning: #ff9e00;
+            --danger: #ef233c;
+            --card-bg: #2b2d42;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--primary), #0d0e1b);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+        
+        .container {
+            width: 95%;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(76, 201, 240, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(45deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+        
+        .logo-icon {
+            font-size: 2rem;
+            color: var(--accent);
+        }
+        
+        .ticker-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            padding: 10px 15px;
+            overflow: hidden;
+            position: relative;
+            width: 65%;
+            height: 40px;
+        }
+        
+        .ticker-scroll {
+            display: flex;
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            align-items: center;
+            animation: ticker-scroll 120s linear infinite;
+        }
+        
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            margin-right: 30px;
+            white-space: nowrap;
+        }
+        
+        .ticker-symbol {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .ticker-price {
+            margin-right: 15px;
+        }
+        
+        .price-up {
+            color: var(--success);
+        }
+        
+        .price-down {
+            color: var(--danger);
+        }
+        
+        .last-updated {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(141, 153, 174, 0.3);
+        }
+        
+        .card-title {
+            font-size: 1.4rem;
+            color: var(--accent);
+            margin: 0;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .status-live {
+            background-color: var(--success);
+            color: #000;
+        }
+        
+        .status-warning {
+            background-color: var(--warning);
+            color: #000;
+        }
+        
+        .coin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .coin-card {
+            background: linear-gradient(145deg, var(--secondary), var(--primary));
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .coin-card:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .coin-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+        }
+        
+        .coin-name {
+            font-size: 1.2rem;
+            margin: 10px 0 5px;
+            color: var(--accent);
+        }
+        
+        .coin-price {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+        
+        .price-change {
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .prediction-bullish {
+            color: var(--success);
+        }
+        
+        .prediction-bearish {
+            color: var(--danger);
+        }
+        
+        .signal {
+            padding: 8px;
+            border-radius: 6px;
+            margin: 8px 0;
+            font-size: 0.9rem;
+        }
+        
+        .signal-buy {
+            background-color: rgba(114, 225, 40, 0.15);
+            border-left: 3px solid var(--success);
+        }
+        
+        .signal-sell {
+            background-color: rgba(239, 35, 60, 0.15);
+            border-left: 3px solid var(--danger);
+        }
+        
+        .signal-hold {
+            background-color: rgba(255, 158, 0, 0.15);
+            border-left: 3px solid var(--warning);
+        }
+        
+        .signal-strong-buy {
+            background: linear-gradient(90deg, rgba(114, 225, 40, 0.2), transparent);
+            border-left: 3px solid var(--success);
+            animation: pulse 2s infinite;
+        }
+        
+        .progress-container {
+            background-color: var(--secondary);
+            border-radius: 5px;
+            height: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            border-radius: 5px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--secondary);
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.2);
+            color: var(--text);
+        }
+        
+        button {
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .influencer-section {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding: 10px 0;
+            margin-bottom: 20px;
+        }
+        
+        .influencer-card {
+            min-width: 200px;
+            background: linear-gradient(145deg, var(--secondary), var(--primary));
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .influencer-name {
+            font-size: 1.1rem;
+            margin: 10px 0 5px;
+            color: var(--accent);
+        }
+        
+        .accuracy-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background-color: var(--accent);
+            color: white;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+        
+        .system-health {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(141, 153, 174, 0.3);
+        }
+        
+        .health-item {
+            text-align: center;
+        }
+        
+        .health-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--success);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 40px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(141, 153, 174, 0.3);
+        }
+        
+        .tab-container {
+            margin: 20px 0;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(141, 153, 174, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--accent);
+            color: var(--accent);
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: var(--card-bg);
+            color: var(--text);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            max-width: 350px;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            border-left: 4px solid var(--success);
+        }
+        
+        .notification.error {
+            border-left: 4px solid var(--danger);
+        }
+        
+        .chart-container {
+            height: 400px;
+            margin-top: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(141, 153, 174, 0.3);
+        }
+        
+        th {
+            color: var(--accent);
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        @keyframes ticker-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .ticker-container {
+                width: 100%;
+            }
+            
+            .coin-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-brain logo-icon"></i>
+                    <h1>SynthIntelligence Crypto</h1>
+                </div>
+                <div class="ticker-container">
+                    <div class="ticker-scroll" id="tickerScroll">
+                        <!-- Ticker items will be dynamically added here -->
+                    </div>
+                </div>
+                <div class="last-updated" id="lastUpdated">UTC: <span id="updateTime">Loading...</span></div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">BTC Dominance & Market Overview</h2>
+                    <span class="status status-live">LIVE</span>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="btcDominanceBar" style="width: 58.27%;"></div>
+                </div>
+                <p>BTC Dominance: <span id="btcDominanceValue">58.27%</span></p>
+                <p>Total Market Cap: <span id="totalMarketCap">$2.36T</span></p>
+                <p>Market Sentiment: <span id="marketSentiment">Neutral to Bullish</span></p>
+                <p>24h Volume: <span id="marketVolume">$108.4B</span></p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">System Health & Accuracy</h2>
+                    <span class="status status-live">OPTIMAL</span>
+                </div>
+                <p>AI Prediction Accuracy: <span id="aiAccuracy">87.3%</span></p>
+                <p>Self-Healing Agent: <span id="healingStatus">Active</span></p>
+                <p>Data Feed Integrity: <span id="dataIntegrity">99.9%</span></p>
+                <p>Last System Update: <span id="systemUpdate">Today, 09:42 AM</span></p>
+                <div class="system-health">
+                    <div class="health-item">
+                        <div>Uptime</div>
+                        <div class="health-value">99.9%</div>
+                    </div>
+                    <div class="health-item">
+                        <div>Latency</div>
+                        <div class="health-value">12ms</div>
+                    </div>
+                    <div class="health-item">
+                        <div>Version</div>
+                        <div class="health-value">2.3.5</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-container">
+            <div class="tabs">
+                <div class="tab active" data-tab="monitored">Tracked Altcoins</div>
+                <div class="tab" data-tab="predictions">Breakout Predictions</div>
+                <div class="tab" data-tab="influencers">Influencer Impact</div>
+                <div class="tab" data-tab="custom">Custom Watchlist</div>
+            </div>
+            
+            <div class="tab-content active" id="monitored">
+                <h3>AI-Monitored Altcoin Performance</h3>
+                <div class="coin-grid">
+                    <div class="coin-card">
+                        <div class="coin-name">WIF</div>
+                        <div class="coin-price">$2.38</div>
+                        <div class="price-change prediction-bullish">+8.2% (24h)</div>
+                        <div>Prediction: <span class="prediction-bullish">BULLISH</span></div>
+                        <div class="signal signal-buy">BUY signal: Now</div>
+                        <div class="signal signal-sell">SELL target: $3.20-$3.50</div>
+                    </div>
+                    
+                    <div class="coin-card">
+                        <div class="coin-name">FIL</div>
+                        <div class="coin-price">$5.87</div>
+                        <div class="price-change prediction-bullish">+5.4% (24h)</div>
+                        <div>Prediction: <span class="prediction-bullish">BULLISH</span></div>
+                        <div class="signal signal-hold">HOLD - Accumulate on dips</div>
+                        <div class="signal signal-sell">SELL target: $8.50-$9.00</div>
+                    </div>
+                    
+                    <div class="coin-card">
+                        <div class="coin-name">BONK</div>
+                        <div class="coin-price">$0.00002347</div>
+                        <div class="price-change prediction-bearish">-3.1% (24h)</div>
+                        <div>Prediction: <span class="prediction-bearish">BEARISH</span></div>
+                        <div class="signal signal-sell">SELL - Wait for entry</div>
+                        <div class="signal signal-buy">BUY zone: $0.000019-0.000021</div>
+                    </div>
+                    
+                    <div class="coin-card">
+                        <div class="coin-name">Cardano (ADA)</div>
+                        <div class="coin-price">$0.46</div>
+                        <div class="price-change prediction-bullish">+2.8% (24h)</div>
+                        <div>Prediction: <span class="prediction-bullish">BULLISH</span></div>
+                        <div class="signal signal-strong-buy">STRONG BUY: Now</div>
+                        <div class="signal signal-sell">SELL target: $0.65-$0.72</div>
+                    </div>
+                    
+                    <div class="coin-card">
+                        <div class="coin-name">Monero (XMR)</div>
+                        <div class="coin-price">$168.34</div>
+                        <div class="price-change prediction-bearish">-1.2% (24h)</div>
+                        <div>Prediction: <span class="prediction-bearish">BEARISH</span></div>
+                        <div class="signal signal-sell">SELL - Wait for entry</div>
+                        <div class="signal signal-buy">BUY zone: $155-$160</div>
+                    </div>
+                    
+                    <div class="coin-card">
+                        <div class="coin-name">TRON (TRX)</div>
+                        <div class="coin-price">$0.12</div>
+                        <div class="price-change prediction-bullish">+1.7% (24h)</div>
+                        <div>Prediction: <span class="prediction-bullish">BULLISH</span></div>
+                        <div class="signal signal-buy">BUY: Now</div>
+                        <div class="signal signal-sell">SELL target: $0.15-$0.16</div>
+                    </div>
+                </div>
+                
+                <h3>Price Performance Charts</h3>
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="predictions">
+                <h3>Early Breakout Predictions</h3>
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Next 7-14 Day Breakout Candidates</h2>
+                    </div>
+                    <div class="signal signal-strong-buy">
+                        <strong>STRONG BUY:</strong> WIF - Expected 45-65% increase within 10 days
+                    </div>
+                    <div class="signal signal-strong-buy">
+                        <strong>STRONG BUY:</strong> ADA - Expected 35-50% increase within 14 days
+                    </div>
+                    <div class="signal signal-buy">
+                        <strong>BUY:</strong> FIL - Expected 25-40% increase within 12 days
+                    </div>
+                    <div class="signal signal-hold">
+                        <strong>HOLD:</strong> TRX - Expected 15-25% increase within 14 days
+                    </div>
+                    <div class="signal signal-sell">
+                        <strong>AVOID/SELL:</strong> BONK - Expected correction of 15-20%
+                    </div>
+                </div>
+                
+                <h3>Prediction Timeframes</h3>
+                <div class="card">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Coin</th>
+                                <th>Buy Window</th>
+                                <th>Sell Target</th>
+                                <th>Timeframe</th>
+                                <th>Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>WIF</td>
+                                <td>Now - Next 48 hours</td>
+                                <td>$3.20 - $3.50</td>
+                                <td>7-10 days</td>
+                                <td class="prediction-bullish">88%</td>
+                            </tr>
+                            <tr>
+                                <td>ADA</td>
+                                <td>Now - Next 72 hours</td>
+                                <td>$0.65 - $0.72</td>
+                                <td>10-14 days</td>
+                                <td class="prediction-bullish">85%</td>
+                            </tr>
+                            <tr>
+                                <td>FIL</td>
+                                <td>Next 5 days on dips</td>
+                                <td>$8.50 - $9.00</td>
+                                <td>12-16 days</td>
+                                <td class="prediction-bullish">82%</td>
+                            </tr>
+                            <tr>
+                                <td>TRX</td>
+                                <td>Next 3 days</td>
+                                <td>$0.15 - $0.16</td>
+                                <td>14-18 days</td>
+                                <td class="prediction-bullish">79%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="influencers">
+                <h3>Influencer Impact Analysis</h3>
+                <div class="influencer-section">
+                    <div class="influencer-card">
+                        <div class="influencer-name">Elon Musk</div>
+                        <div>Primary Holdings: DOGE, BTC</div>
+                        <div>Predicted Influence: <span class="prediction-bullish">Very High</span></div>
+                        <div>Potential Pumps: DOGE, TRX</div>
+                        <div class="accuracy-badge">88% Accuracy</div>
+                    </div>
+                    
+                    <div class="influencer-card">
+                        <div class="influencer-name">Donald Trump</div>
+                        <div>Primary Holdings: TRUMP token, BTC</div>
+                        <div>Predicted Influence: <span class="prediction-bullish">High</span></div>
+                        <div>Potential Pumps: TRUMP, POLITICO tokens</div>
+                        <div class="accuracy-badge">82% Accuracy</div>
+                    </div>
+                    
+                    <div class="influencer-card">
+                        <div class="influencer-name">Cathie Wood</div>
+                        <div>Primary Holdings: BTC, ETH</div>
+                        <div>Predicted Influence: <span class="prediction-bullish">Medium-High</span></div>
+                        <div>Potential Pumps: BTC, COIN</div>
+                        <div class="accuracy-badge">85% Accuracy</div>
+                    </div>
+                    
+                    <div class="influencer-card">
+                        <div class="influencer-name">Michael Saylor</div>
+                        <div>Primary Holdings: BTC</div>
+                        <div>Predicted Influence: <span class="prediction-bullish">High</span></div>
+                        <div>Potential Pumps: BTC, MicroStrategy</div>
+                        <div class="accuracy-badge">91% Accuracy</div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Influencer Sentiment Analysis</h2>
+                    </div>
+                    <p>Elon Musk: Recently tweeted about "future of digital payments" - potential DOGE signal</p>
+                    <p>Donald Trump: Expected to mention cryptocurrency at upcoming rally - likely positive</p>
+                    <p>Cathie Wood: ARK Invest continues to accumulate BTC and ETH</p>
+                    <p>Michael Saylor: No recent public statements - neutral impact expected</p>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="custom">
+                <h3>Custom Coin Watchlist</h3>
+                <div class="card">
+                    <div class="form-group">
+                        <label for="customCoin">Add Coin to Monitor (Symbol):</label>
+                        <input type="text" id="customCoin" placeholder="e.g. ETH, SOL, DOT">
+                    </div>
+                    <button id="addCoinBtn">Add Coin</button>
+                </div>
+                
+                <div id="customCoinsContainer">
+                    <h4>Your Watched Coins</h4>
+                    <div id="customCoinsList" class="coin-grid">
+                        <!-- Custom coins will be added here -->
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="customChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>Synthetic Intelligence Altcoin Prediction System | Version 2.3.5 | Self-Healing AI Architecture</p>
+            <p>This is a simulation for educational purposes only. Not financial advice.</p>
+        </div>
+    </footer>
+
+    <div class="notification" id="notification">
+        <div id="notificationMessage"></div>
+    </div>
+
+    <script>
+        // Initialize variables and state
+        const monitoredCoins = ['WIF', 'FIL', 'BONK', 'ADA', 'XMR', 'TRX'];
+        const topCoins = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE', 'TON', 'ADA', 'AVAX', 'DOT', 'LINK', 'MATIC', 'SHIB', 'BCH', 'LTC', 'XMR'];
+        let customCoins = [];
+        let priceChart, customChart;
+        
+        // DOM Ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTicker();
+            initializeCharts();
+            setupEventListeners();
+            startDataFeed();
+            updateSystemStatus();
+            
+            // Simulate initial loading of data
+            simulateLiveData();
+        });
+        
+        // Initialize price ticker
+        function initializeTicker() {
+            const tickerScroll = document.getElementById('tickerScroll');
+            
+            topCoins.forEach(coin => {
+                const tickerItem = document.createElement('div');
+                tickerItem.className = 'ticker-item';
+                
+                // Generate random price and change
+                const price = (Math.random() * 100000).toFixed(2);
+                const change = (Math.random() * 10 - 5).toFixed(2);
+                const isPositive = parseFloat(change) >= 0;
+                
+                tickerItem.innerHTML = `
+                    <span class="ticker-symbol">${coin}</span>
+                    <span class="ticker-price">$${price}</span>
+                    <span class="ticker-change ${isPositive ? 'price-up' : 'price-down'}">${isPositive ? '+' : ''}${change}%</span>
+                `;
+                
+                tickerScroll.appendChild(tickerItem);
+            });
+            
+            // Clone for seamless looping
+            const clone = tickerScroll.cloneNode(true);
+            document.getElementById('tickerScroll').parentNode.appendChild(clone);
+        }
+        
+        // Initialize charts
+        function initializeCharts() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'WIF',
+                        data: generatePriceData(2.10, 0.15, 30),
+                        borderColor: '#4cc9f0',
+                        backgroundColor: 'rgba(76, 201, 240, 0.1)',
+                        tension: 0.3,
+                        pointRadius: 0,
+                        fill: true
+                    }, {
+                        label: 'FIL',
+                        data: generatePriceData(5.50, 0.40, 30),
+                        borderColor: '#f72585',
+                        backgroundColor: 'rgba(247, 37, 133, 0.1)',
+                        tension: 0.3,
+                        pointRadius: 0,
+                        fill: true
+                    }, {
+                        label: 'ADA',
+                        data: generatePriceData(0.42, 0.05, 30),
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        tension: 0.3,
+                        pointRadius: 0,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day'
+                            },
+                            grid: {
+                                color: 'rgba(141, 153, 174, 0.1)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(141, 153, 174, 0.1)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.parsed.y.toFixed(4);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            const customCtx = document.getElementById('customChart').getContext('2d');
+            customChart = new Chart(customCtx, {
+                type: 'line',
+                data: {
+                    datasets: []
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day'
+                            },
+                            grid: {
+                                color: 'rgba(141, 153, 174, 0.1)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(141, 153, 174, 0.1)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Tab switching
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+            
+            // Add coin button
+            document.getElementById('addCoinBtn').addEventListener('click', addCustomCoin);
+        }
+        
+        // Switch tabs
+        function switchTab(tabName) {
+            // Deactivate all tabs and contents
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Activate selected tab and content
+            document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+        
+        // Add custom coin to watchlist
+        function addCustomCoin() {
+            const coinInput = document.getElementById('customCoin');
+            const coinSymbol = coinInput.value.trim().toUpperCase();
+            
+            if (!coinSymbol) {
+                showNotification('Please enter a coin symbol', 'error');
+                return;
+            }
+            
+            if (customCoins.includes(coinSymbol)) {
+                showNotification('Coin is already in your watchlist', 'error');
+                return;
+            }
+            
+            customCoins.push(coinSymbol);
+            renderCustomCoins();
+            
+            // Add to chart with simulated data
+            const colors = ['#4cc9f0', '#f72585', '#4361ee', '#7209b7', '#3a0ca3', '#ff9e00'];
+            const color = colors[customChart.data.datasets.length % colors.length];
+            
+            customChart.data.datasets.push({
+                label: coinSymbol,
+                data: generatePriceData(Math.random() * 10 + 0.5, Math.random() * 2, 30),
+                borderColor: color,
+                backgroundColor: color + '20',
+                tension: 0.3,
+                pointRadius: 0,
+                fill: true
+            });
+            
+            customChart.update();
+            
+            coinInput.value = '';
+            showNotification(`${coinSymbol} added to your watchlist`, 'success');
+        }
+        
+        // Render custom coins list
+        function renderCustomCoins() {
+            const container = document.getElementById('customCoinsList');
+            container.innerHTML = '';
+            
+            if (customCoins.length === 0) {
+                container.innerHTML = '<p>No coins in your watchlist yet. Add some above.</p>';
+                return;
+            }
+            
+            customCoins.forEach(coin => {
+                const price = (Math.random() * 100 + 0.5).toFixed(4);
+                const change = (Math.random() * 10 - 5).toFixed(2);
+                const isPositive = parseFloat(change) >= 0;
+                const prediction = Math.random() > 0.5 ? 'BULLISH' : 'BEARISH';
+                
+                const coinEl = document.createElement('div');
+                coinEl.className = 'coin-card';
+                coinEl.innerHTML = `
+                    <div class="coin-name">${coin}</div>
+                    <div class="coin-price">$${price}</div>
+                    <div class="price-change ${isPositive ? 'prediction-bullish' : 'prediction-bearish'}">${isPositive ? '+' : ''}${change}% (24h)</div>
+                    <div>Prediction: <span class="${prediction === 'BULLISH' ? 'prediction-bullish' : 'prediction-bearish'}">${prediction}</span></div>
+                `;
+                container.appendChild(coinEl);
+            });
+        }
+        
+        // Start simulated data feed
+        function startDataFeed() {
+            // Update time every second
+            setInterval(() => {
+                document.getElementById('updateTime').textContent = new Date().toUTCString().substring(17, 25);
+            }, 1000);
+            
+            // Update prices and data every 5 seconds
+            setInterval(() => {
+                simulateLiveData();
+            }, 5000);
+            
+            // Simulate system self-update every 30 seconds
+            setInterval(() => {
+                simulateSystemUpdate();
+            }, 30000);
+        }
+        
+        // Simulate live data updates
+        function simulateLiveData() {
+            // Update BTC dominance slightly
+            const btcDom = 58.27 + (Math.random() * 0.6 - 0.3);
+            document.getElementById('btcDominanceValue').textContent = btcDom.toFixed(2) + '%';
+            document.getElementById('btcDominanceBar').style.width = btcDom + '%';
+            
+            // Update AI accuracy slightly
+            const accuracy = 85 + (Math.random() * 5 - 2.5);
+            document.getElementById('aiAccuracy').textContent = accuracy.toFixed(1) + '%';
+            
+            // Update charts with new data points
+            updateChartsWithNewData();
+            
+            // Occasionally show notifications about market movements
+            if (Math.random() > 0.7) {
+                const coins = ['WIF', 'FIL', 'ADA', 'TRX', 'XMR', 'BONK'];
+                const coin = coins[Math.floor(Math.random() * coins.length)];
+                const direction = Math.random() > 0.5 ? 'up' : 'down';
+                const percent = (Math.random() * 3 + 1).toFixed(2);
+                
+                showNotification(`${coin} moving ${direction} ${percent}% in past 5 minutes`, 'success');
+            }
+        }
+        
+        // Update charts with new data points
+        function updateChartsWithNewData() {
+            const now = Date.now();
+            
+            // Update main chart
+            priceChart.data.datasets.forEach(dataset => {
+                const lastPrice = dataset.data[dataset.data.length - 1].y;
+                const change = (Math.random() - 0.5) * 0.5;
+                const newPrice = Math.max(0.1, lastPrice + change);
+                
+                // Remove first point and add new one
+                if (dataset.data.length > 30) {
+                    dataset.data.shift();
+                }
+                
+                dataset.data.push({
+                    x: now,
+                    y: newPrice
+                });
+            });
+            
+            priceChart.update('none');
+            
+            // Update custom chart
+            customChart.data.datasets.forEach(dataset => {
+                const lastPrice = dataset.data[dataset.data.length - 1].y;
+                const change = (Math.random() - 0.5) * 0.5;
+                const newPrice = Math.max(0.01, lastPrice + change);
+                
+                // Remove first point and add new one
+                if (dataset.data.length > 30) {
+                    dataset.data.shift();
+                }
+                
+                dataset.data.push({
+                    x: now,
+                    y: newPrice
+                });
+            });
+            
+            customChart.update('none');
+        }
+        
+        // Simulate system updates
+        function simulateSystemUpdate() {
+            showNotification('System auto-update completed. Prediction models refined.', 'success');
+            
+            // Slightly improve accuracy after update
+            const currentAccuracy = parseFloat(document.getElementById('aiAccuracy').textContent);
+            document.getElementById('aiAccuracy').textContent = (Math.min(95, currentAccuracy + 0.2)).toFixed(1) + '%';
+            
+            // Update system update time
+            document.getElementById('systemUpdate').textContent = new Date().toLocaleTimeString();
+        }
+        
+        // Update system status
+        function updateSystemStatus() {
+            // Simulate occasional system issues and self-healing
+            setInterval(() => {
+                if (Math.random() > 0.8) {
+                    // Simulate a minor issue
+                    document.getElementById('dataIntegrity').textContent = '99.5%';
+                    document.getElementById('dataIntegrity').style.color = '#f72585';
+                    
+                    // Show notification
+                    showNotification('Minor data anomaly detected. Self-healing in progress...', 'error');
+                    
+                    // Resolve after a delay
+                    setTimeout(() => {
+                        document.getElementById('dataIntegrity').textContent = '99.9%';
+                        document.getElementById('dataIntegrity').style.color = '#4cc9f0';
+                        showNotification('Issue resolved. Data integrity restored.', 'success');
+                    }, 3000);
+                }
+            }, 60000);
+        }
+        
+        // Show notification
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            const messageEl = document.getElementById('notificationMessage');
+            
+            messageEl.textContent = message;
+            notification.className = `notification show ${type}`;
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                notification.className = 'notification';
+            }, 5000);
+        }
+        
+        // Generate simulated price data
+        function generatePriceData(basePrice, volatility, points) {
+            const data = [];
+            let currentPrice = basePrice;
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+            
+            for (let i = points - 1; i >= 0; i--) {
+                const time = now - (i * oneDay);
+                const change = (Math.random() - 0.5) * volatility;
+                currentPrice = Math.max(0.01, currentPrice + change);
+                
+                data.push({
+                    x: time,
+                    y: currentPrice
+                });
+            }
+            
+            return data;
+        }
+    </script>
+</body>
+</html>
